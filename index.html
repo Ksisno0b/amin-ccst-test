@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>CyberQuest CCST Learning Engine v3.25</title>
+<title>CyberQuest CCST Learning Engine v3.26</title>
 <style>
 
 :root{
@@ -486,7 +486,7 @@ body.bug-drawer-open{overflow:hidden}
 <header class="top">
   <div class="brand">
     <div class="logo">CQ</div>
-    <div class="brand-text"><strong>CYBERQUEST · PLAYER #0001</strong><small>CCST IT Support Stage 2 v3.25 · Build 2026-07-26</small></div>
+    <div class="brand-text"><strong>CYBERQUEST · PLAYER #0001</strong><small>CCST IT Support Stage 2 v3.26 · Build 2026-07-26</small></div>
   </div>
   <div class="top-actions">
     <nav class="nav">
@@ -556,11 +556,12 @@ body.bug-drawer-open{overflow:hidden}
       <div class="timer" id="mockTimer">--:--</div>
     </div>
     <div id="mockIntro">
-      <p>Use Quick 10 for a short mixed check. Use Full 50 only after completing broad syllabus coverage. The 50-question set uses a 50-minute timer to mirror the official exam duration, but its score target is an internal study rule.</p>
+      <div class="callout blue"><b id="mockIntroTitle">Foundation Mock — 12 questions</b><p id="mockIntroText">This mock only tests the two lessons you have actually completed: HD-01 and OS-01. It mixes direct questions, work situations, and evidence interpretation. No hints or explanations appear until you submit.</p></div>
       <div class="grid-2">
-        <div class="action-card"><div><h3>Quick 10</h3><p class="small">15 minutes · fast weak-area signal</p></div><button class="btn" id="quick10">Start</button></div>
-        <div class="action-card"><div><h3>Full 50</h3><p class="small">50 minutes · balanced across six domains</p></div><button class="btn primary" id="full50">Start</button></div>
+        <div class="action-card"><div><h3 id="foundationMockTitle">Foundation Mock 12</h3><p class="small" id="foundationMockDesc">15 minutes · 3 sections · no hints</p></div><button class="btn primary" id="quick10">Start</button></div>
+        <div class="action-card"><div><h3 id="fullMockTitle">Full Mixed Mock 50</h3><p class="small" id="fullMockDesc">Locked until broader syllabus coverage is completed.</p></div><button class="btn" id="full50" disabled>Locked</button></div>
       </div>
+      <div class="callout yellow" style="margin-top:14px"><b id="mockRuleTitle">Mock rules</b><p id="mockRuleText">Answer independently. You may move between questions. Explanations and the correct answers are shown only after submission.</p></div>
     </div>
     <div id="mockRun" class="hidden">
       <div class="exam-layout">
@@ -1504,93 +1505,77 @@ function commitSession(){
  }
  toast(pass?pick("Result saved.","Keputusan disimpan."):pick("Repair status saved.","Status repair disimpan."));showView("dashboard");
 }
-function questionPool(){
- const out=[];
- DATA.lessons.forEach(l=>l.questions.forEach((qq,i)=>out.push({...qq,domain:l.domain,lessonId:l.id,key:`${l.id}-${i}`})));
- return out;
-}
-function weakestDomains(){
- return DATA.domains.map(d=>({id:d.id,avg:domainStat(d.id).avg})).sort((a,b)=>a.avg-b.avg).map(x=>x.id);
-}
-function buildExam(count){
- const pool=questionPool(), selected=[];
- if(count>=DATA.domains.length){
-   const base=Math.floor(count/DATA.domains.length),rem=count%DATA.domains.length;
-   const weak=weakestDomains();
-   DATA.domains.forEach(d=>{
-     selected.push(...shuffle(pool.filter(q=>q.domain===d.id)).slice(0,base));
-   });
-   for(let i=0;i<rem;i++){
-     const d=weak[i%weak.length];
-     const available=pool.filter(q=>q.domain===d && !selected.some(s=>s.key===q.key));
-     if(available.length)selected.push(shuffle(available)[0]);
-   }
- }else selected.push(...shuffle(pool).slice(0,count));
- return shuffle(selected).map(shuffleQuestion);
-}
+const FOUNDATION_MOCK_BANK=[
+ {section:"A",lessonId:"HD-01",domain:1,q:"A payroll system is unavailable for every employee and payroll is due within one hour. Which ticket should be handled first?",qBm:"Sistem payroll tidak boleh digunakan oleh semua pekerja dan payroll perlu siap dalam masa satu jam. Ticket mana patut dibuat dahulu?",options:["A second monitor is not working for one user","A password has expired for one user","The company-wide payroll outage","A request to install a non-urgent application"],optionsBm:["Monitor kedua seorang pengguna tidak berfungsi","Password seorang pengguna sudah tamat tempoh","Gangguan payroll seluruh syarikat","Permintaan memasang aplikasi yang tidak urgent"],answer:2,explain:"The payroll outage has both the widest impact and the highest urgency.",explainBm:"Gangguan payroll mempunyai impact paling luas dan urgency paling tinggi."},
+ {section:"A",lessonId:"HD-01",domain:1,q:"Which two factors most directly determine ticket priority?",qBm:"Dua faktor mana paling terus menentukan priority ticket?",options:["Impact and urgency","User job title and device age","Technician preference and ticket length","Cost and screen size"],optionsBm:["Impact dan urgency","Jawatan pengguna dan umur device","Pilihan technician dan panjang ticket","Kos dan saiz skrin"],answer:0,explain:"Priority is normally based on how many users or services are affected and how quickly action is needed.",explainBm:"Priority biasanya ditentukan oleh berapa ramai pengguna atau servis terjejas dan seberapa cepat tindakan diperlukan."},
+ {section:"A",lessonId:"OS-01",domain:4,q:"Task Manager shows CPU 18%, Memory 94%, and Disk 2%. What should the technician investigate first?",qBm:"Task Manager menunjukkan CPU 18%, Memory 94% dan Disk 2%. Apa yang patut disiasat dahulu?",options:["The process using the most Memory","Replace the storage drive","End every Windows process","Disable antivirus immediately"],optionsBm:["Proses yang menggunakan Memory paling tinggi","Tukar storage drive","Tamatkan semua proses Windows","Matikan antivirus dengan segera"],answer:0,explain:"Memory is the strongest clue, so first identify which process is using it.",explainBm:"Memory ialah petunjuk paling kuat, jadi kenal pasti proses yang menggunakannya dahulu."},
+ {section:"A",lessonId:"OS-01",domain:4,q:"Disk usage reaches 100% while Windows Update is installing. What is the safest interpretation?",qBm:"Penggunaan Disk mencecah 100% semasa Windows Update sedang memasang update. Tafsiran mana paling selamat?",options:["The drive is definitely broken","High Disk activity may be expected during the update","The CPU must be replaced","End every service immediately"],optionsBm:["Drive memang sudah rosak","Aktiviti Disk tinggi mungkin normal semasa update","CPU mesti ditukar","Tamatkan semua servis dengan segera"],answer:1,explain:"High Disk activity can be temporary and expected during updates; evidence is needed before declaring hardware failure.",explainBm:"Aktiviti Disk tinggi boleh berlaku sementara semasa update; bukti diperlukan sebelum menganggap hardware rosak."},
+ {section:"A",lessonId:"OS-01",domain:4,q:"After closing an unused application, Memory drops from 91% to 63% and the user says the laptop is responsive again. What should happen next?",qBm:"Selepas menutup aplikasi yang tidak digunakan, Memory turun daripada 91% kepada 63% dan pengguna kata laptop sudah responsif. Apa langkah seterusnya?",options:["Confirm the result, document it, and monitor","End more processes until Memory reaches 0%","Replace RAM immediately","Close the ticket without telling the user"],optionsBm:["Sahkan hasil, dokumentasikan dan pantau","Tamatkan lebih banyak proses sehingga Memory jadi 0%","Tukar RAM dengan segera","Tutup ticket tanpa memaklumkan pengguna"],answer:0,explain:"The change improved the evidence and user experience, so verify and document rather than making more unnecessary changes.",explainBm:"Bacaan dan pengalaman pengguna bertambah baik, jadi sahkan dan dokumentasikan tanpa membuat perubahan tambahan yang tidak perlu."},
+ {section:"A",lessonId:"OS-01",domain:4,q:"A process name is unfamiliar and appears to belong to Windows. What is the safest first action?",qBm:"Nama proses tidak dikenali dan nampak seperti proses Windows. Apa tindakan pertama paling selamat?",options:["Leave it running and investigate before acting","End it because the name is unfamiliar","Disable Windows security","Delete its files"],optionsBm:["Biarkan berjalan dan siasat dahulu","Tamatkan sebab nama tidak dikenali","Matikan Windows Security","Padam fail proses itu"],answer:0,explain:"Unfamiliar system processes should not be ended without understanding their purpose and impact.",explainBm:"Proses sistem yang tidak dikenali tidak patut ditamatkan tanpa memahami fungsi dan kesannya."},
+ {section:"B",lessonId:"HD-01",domain:1,q:"Three tickets arrive: a company-wide finance outage, one user cannot sign in, and one user's second monitor is broken but the laptop screen works. Which order is best?",qBm:"Tiga ticket masuk: gangguan sistem kewangan seluruh syarikat, seorang pengguna tak boleh sign in, dan monitor kedua seorang pengguna rosak tetapi skrin laptop masih berfungsi. Susunan mana paling tepat?",options:["Finance outage → sign-in issue → monitor issue","Monitor issue → sign-in issue → finance outage","Sign-in issue → monitor issue → finance outage","Handle only the easiest ticket"],optionsBm:["Gangguan kewangan → masalah sign-in → masalah monitor","Masalah monitor → masalah sign-in → gangguan kewangan","Masalah sign-in → masalah monitor → gangguan kewangan","Buat ticket paling mudah sahaja"],answer:0,explain:"The order follows business impact and work blockage.",explainBm:"Susunan itu mengikut impact kepada perniagaan dan tahap kerja terhalang."},
+ {section:"B",lessonId:"OS-01",domain:4,q:"A laptop slows only when many browser tabs and applications are open. Memory is 88%, CPU is 22%, and Disk is 3%. Which action is most appropriate?",qBm:"Laptop menjadi perlahan hanya apabila banyak tab browser dan aplikasi dibuka. Memory 88%, CPU 22% dan Disk 3%. Tindakan mana paling sesuai?",options:["Close an unused recognized app or tab, then verify Memory again","End every process above 5%","Replace the disk","Disable all startup services"],optionsBm:["Tutup aplikasi atau tab yang dikenali dan tidak digunakan, kemudian semak Memory semula","Tamatkan semua proses melebihi 5%","Tukar disk","Matikan semua startup service"],answer:0,explain:"The evidence points to active applications filling Memory, so a targeted safe action should be tried and verified.",explainBm:"Bukti menunjukkan aplikasi aktif memenuhi Memory, jadi buat tindakan selamat yang khusus dan semak semula."},
+ {section:"B",lessonId:"OS-01",domain:4,q:"CPU is 92% for two seconds while an application opens, then falls to 15%. What should the technician do?",qBm:"CPU berada pada 92% selama dua saat ketika aplikasi dibuka, kemudian turun kepada 15%. Apa technician patut buat?",options:["Observe; a short spike alone is not proof of a fault","Replace the CPU","End the application immediately","Reset Windows"],optionsBm:["Perhatikan; spike sekejap sahaja bukan bukti masalah","Tukar CPU","Tamatkan aplikasi dengan segera","Reset Windows"],answer:0,explain:"A brief CPU spike can be normal when work starts. Persistent evidence matters more.",explainBm:"CPU spike sekejap boleh jadi normal apabila kerja bermula. Bukti yang berterusan lebih penting."},
+ {section:"B",lessonId:"OS-01",domain:4,q:"After a safe action, the readings barely change and the user still reports slowness. What is the best next step?",qBm:"Selepas tindakan selamat dibuat, bacaan hampir tidak berubah dan pengguna masih kata laptop perlahan. Apa langkah terbaik?",options:["Keep the case open and investigate another cause","Close the ticket because one action was attempted","End random processes until something changes","Claim the problem is fixed"],optionsBm:["Kekalkan kes terbuka dan siasat punca lain","Tutup ticket sebab satu tindakan sudah dicuba","Tamatkan proses secara rawak sehingga ada perubahan","Katakan masalah sudah selesai"],answer:0,explain:"No verified improvement means the case is not resolved and troubleshooting must continue.",explainBm:"Tiada peningkatan yang disahkan bermaksud kes belum selesai dan troubleshooting perlu diteruskan."},
+ {section:"C",lessonId:"OS-01",domain:4,evidence:"CPU 12% · Memory 43% · Disk 98%\nTop Disk process: Windows Update",evidenceBm:"CPU 12% · Memory 43% · Disk 98%\nProses Disk tertinggi: Windows Update",q:"Which conclusion is best supported by this evidence?",qBm:"Kesimpulan mana paling disokong oleh bukti ini?",options:["Disk activity is the strongest clue and may be related to the update","Memory is full","The CPU has failed","The monitor cable is loose"],optionsBm:["Aktiviti Disk ialah petunjuk paling kuat dan mungkin berkaitan dengan update","Memory penuh","CPU rosak","Kabel monitor longgar"],answer:0,explain:"The highest active resource and named process point to update-related Disk activity.",explainBm:"Resource paling aktif dan nama proses menunjukkan aktiviti Disk berkaitan update."},
+ {section:"C",lessonId:"OS-01",domain:4,evidence:"Before: CPU 21% · Memory 89% · Disk 2%\nAfter closing unused tabs: CPU 19% · Memory 66% · Disk 2%",evidenceBm:"Sebelum: CPU 21% · Memory 89% · Disk 2%\nSelepas tutup tab yang tidak digunakan: CPU 19% · Memory 66% · Disk 2%",q:"What does the before-and-after evidence show?",qBm:"Apa yang ditunjukkan oleh bukti sebelum dan selepas ini?",options:["The targeted action reduced Memory pressure","The disk has failed","CPU usage is the root cause","No meaningful change occurred"],optionsBm:["Tindakan khusus itu mengurangkan tekanan Memory","Disk rosak","CPU ialah punca utama","Tiada perubahan bermakna berlaku"],answer:0,explain:"Memory dropped substantially after the targeted action while the other readings stayed stable.",explainBm:"Memory turun dengan ketara selepas tindakan khusus dibuat sementara bacaan lain kekal stabil."}
+];
+function questionPool(){return FOUNDATION_MOCK_BANK.map((q,i)=>({...q,key:`FM-${i}`}))}
+function weakestDomains(){return [1,4]}
+function buildExam(count){return shuffle(questionPool()).slice(0,Math.min(count,questionPool().length)).map((q,i)=>({...q,_originalAnswer:q.answer}))}
 function startMock(count){
- toast(pick("Mock is paused while the two-lesson beginner foundation is being validated.","Mock dihentikan sementara asas beginner dua lesson sedang diuji."));
- showView("mock");
+ if(count>FOUNDATION_MOCK_BANK.length){toast(pick("Full 50 is locked until broader syllabus coverage is completed.","Full 50 dikunci sehingga lebih banyak silibus disiapkan."));return}
+ exam={questions:buildExam(count),answers:{},index:0,seconds:15*60,submitted:false};
+ renderMock();startTimer();
 }
 function startTimer(){
  if(timerId)clearInterval(timerId);
- timerId=setInterval(()=>{
-   if(!exam||exam.submitted){clearInterval(timerId);return}
-   exam.seconds--;updateTimer();
-   if(exam.seconds<=0)submitMock(true);
- },1000);
+ timerId=setInterval(()=>{if(!exam||exam.submitted){clearInterval(timerId);return}exam.seconds--;updateTimer();if(exam.seconds<=0)submitMock(true)},1000)
 }
-function updateTimer(){
- if(!exam)return;
- const m=String(Math.floor(exam.seconds/60)).padStart(2,"0"),s=String(exam.seconds%60).padStart(2,"0");
- $("#mockTimer").textContent=`${m}:${s}`;
-}
+function updateTimer(){if(!exam)return;const m=String(Math.floor(exam.seconds/60)).padStart(2,"0"),s=String(exam.seconds%60).padStart(2,"0");$("#mockTimer").textContent=`${m}:${s}`}
 function renderMock(){
  const intro=$("#mockIntro"),run=$("#mockRun"),result=$("#mockResult");
- if(!exam){
-  $("#mockTimer").textContent="--:--";run.classList.add("hidden");result.classList.add("hidden");intro.classList.remove("hidden");
-  intro.innerHTML=`<div class="callout yellow"><b>${esc(pick("Mock is paused during foundation validation","Mock dihentikan sementara semasa validation asas"))}</b><p>${esc(pick("Finish testing the real-work loop first. Mixed mocks will return after the lesson system is approved.","Habiskan test flow kerja sebenar dahulu. Mixed mock akan dibuka semula selepas sistem lesson ini disahkan."))}</p></div>`;
-  return;
- }
- exam=null;renderMock();
+ if(!exam){$("#mockTimer").textContent="--:--";run.classList.add("hidden");result.classList.add("hidden");intro.classList.remove("hidden");return}
+ intro.classList.add("hidden");
+ if(exam.submitted){run.classList.add("hidden");result.classList.remove("hidden");renderMockResult();return}
+ run.classList.remove("hidden");result.classList.add("hidden");
+ const i=exam.index,qq=exam.questions[i],bm=isBM(),sectionName=qq.section==="A"?pick("Section A · Core concepts","Bahagian A · Konsep asas"):qq.section==="B"?pick("Section B · Work situations","Bahagian B · Situasi kerja"):pick("Section C · Evidence interpretation","Bahagian C · Tafsir bukti");
+ $("#mockCount").textContent=`${sectionName} · ${pick("Question","Soalan")} ${i+1}/${exam.questions.length}`;
+ $("#mockQuestion").textContent=bm?(qq.qBm||qq.q):qq.q;
+ const evidence=bm?(qq.evidenceBm||qq.evidence):qq.evidence;
+ $("#mockOptions").innerHTML=(evidence?`<div class="callout blue" style="white-space:pre-line"><b>${esc(pick("Evidence","Bukti"))}</b><p>${esc(evidence)}</p></div>`:"")+((bm&&qq.optionsBm)?qq.optionsBm:qq.options).map((o,idx)=>`<button class="option ${exam.answers[i]===idx?"selected":""}" data-mock-answer="${idx}">${esc(o)}</button>`).join("");
+ $$("[data-mock-answer]",$("#mockOptions")).forEach(b=>b.onclick=()=>{exam.answers[i]=+b.dataset.mockAnswer;renderMock()});
+ $("#mockPrev").disabled=i===0;$("#mockNext").disabled=i===exam.questions.length-1;$("#mockSubmit").classList.toggle("hidden",i!==exam.questions.length-1);
+ $("#mockPrev").onclick=()=>{if(exam.index>0){exam.index--;renderMock()}};
+ $("#mockNext").onclick=()=>{if(exam.index<exam.questions.length-1){exam.index++;renderMock()}};
+ $("#mockSubmit").onclick=()=>submitMock(false);
+ $("#mockNav").innerHTML=exam.questions.map((q,n)=>`<button class="${n===i?"current":""} ${exam.answers[n]!==undefined?"answered":""}" data-qnav="${n}">${n+1}</button>`).join("");
+ $$("[data-qnav]",$("#mockNav")).forEach(b=>b.onclick=()=>{exam.index=+b.dataset.qnav;renderMock()});
+ updateTimer();
 }
 function submitMock(auto){
  if(!exam||exam.submitted)return;
  const unanswered=exam.questions.length-Object.keys(exam.answers).length;
- if(!auto && unanswered && !confirm(`${unanswered} questions are unanswered. Submit anyway?`))return;
+ if(!auto&&unanswered&&!confirm(pick(`${unanswered} questions are unanswered. Submit anyway?`,`${unanswered} soalan belum dijawab. Hantar juga?`)))return;
  if(timerId)clearInterval(timerId);
- const byDomain={};let correct=0;
- exam.questions.forEach((qq,i)=>{
-   const ok=exam.answers[i]===qq.answer;if(ok)correct++;
-   byDomain[qq.domain]??={correct:0,total:0};byDomain[qq.domain].total++;if(ok)byDomain[qq.domain].correct++;
- });
+ const byDomain={},bySection={};let correct=0;
+ exam.questions.forEach((qq,i)=>{const ok=exam.answers[i]===qq.answer;if(ok)correct++;byDomain[qq.domain]??={correct:0,total:0};byDomain[qq.domain].total++;if(ok)byDomain[qq.domain].correct++;bySection[qq.section]??={correct:0,total:0};bySection[qq.section].total++;if(ok)bySection[qq.section].correct++});
  const score=Math.round(correct/exam.questions.length*100);
- exam.result={score,correct,total:exam.questions.length,byDomain,auto,completedAt:new Date().toISOString()};
- exam.submitted=true;
- state.mockHistory.push({score,count:exam.questions.length,date:today(),byDomain});
- state.mockHistory=state.mockHistory.slice(-20);save();
- renderMock();
+ exam.result={score,correct,total:exam.questions.length,byDomain,bySection,auto,completedAt:new Date().toISOString()};exam.submitted=true;
+ state.mockHistory.push({score,count:exam.questions.length,date:today(),byDomain,kind:"foundation"});state.mockHistory=state.mockHistory.slice(-20);save();renderMock();
 }
 function renderMockResult(){
- const r=exam.result;
- $("#mockScore").textContent=r.score+"%";
- $("#mockScore").style.color=r.score>=DATA.plan.mockTarget?"var(--green)":"var(--yellow)";
- $("#mockVerdict").textContent=r.score>=DATA.plan.mockTarget?"Internal readiness target met for this set. Repeat on another day to prove consistency.":"Below the internal 80% readiness target. Repair weak domains before another full mock.";
- $("#mockDomainResults").innerHTML=DATA.domains.map(d=>{
-   const x=r.byDomain[d.id]||{correct:0,total:0},pct=x.total?Math.round(x.correct/x.total*100):0;
-   return `<div class="metric"><span>${d.id}. ${esc(d.name)}</span><strong>${pct}%</strong><div class="bar"><i style="width:${pct}%"></i></div></div>`;
- }).join("");
+ const r=exam.result,bm=isBM();$("#mockScore").textContent=r.score+"%";$("#mockScore").style.color=r.score>=80?"var(--green)":"var(--yellow)";
+ $("#mockVerdict").textContent=r.score>=80?pick("Foundation target met. Review mistakes, then repeat later with a different order.","Target asas dicapai. Review kesilapan, kemudian ulang pada masa lain dengan susunan berbeza."):pick("Below the 80% foundation target. Review the exact mistakes before repeating.","Belum capai target asas 80%. Review kesilapan tepat sebelum ulang.");
+ const sectionLabels={A:pick("Core concepts","Konsep asas"),B:pick("Work situations","Situasi kerja"),C:pick("Evidence interpretation","Tafsir bukti")};
+ $("#mockDomainResults").innerHTML=["A","B","C"].map(k=>{const x=r.bySection[k]||{correct:0,total:0},pct=x.total?Math.round(x.correct/x.total*100):0;return `<div class="metric"><span>${esc(sectionLabels[k])}</span><strong>${pct}%</strong><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join("");
  const wrong=exam.questions.map((qq,i)=>({qq,i,chosen:exam.answers[i]})).filter(x=>x.chosen!==x.qq.answer);
- $("#mockReview").innerHTML=wrong.length?wrong.map(x=>`<details><summary>Q${x.i+1} · ${esc(x.qq.q)}</summary><div>
-   <p><b>Your answer:</b> ${x.chosen===undefined?"Unanswered":esc(x.qq.options[x.chosen])}</p>
-   <p><b>Correct answer:</b> ${esc(x.qq.options[x.qq.answer])}</p><p>${esc(x.qq.explain)}</p><p class="small">Mapped lesson: ${esc(x.qq.lessonId)}</p>
-  </div></details>`).join(""):`<div class="callout green"><b>No incorrect answers in this set.</b></div>`;
- $("#mockDone").onclick=()=>{exam=null;$("#mockTimer").textContent="--:--";showView("progress")};
+ $("#mockReview").innerHTML=wrong.length?wrong.map(x=>{const opts=(bm&&x.qq.optionsBm)?x.qq.optionsBm:x.qq.options,exp=bm?(x.qq.explainBm||x.qq.explain):x.qq.explain,q=bm?(x.qq.qBm||x.qq.q):x.qq.q;return `<details><summary>${pick("Question","Soalan")} ${x.i+1} · ${esc(q)}</summary><div><p><b>${esc(pick("Your answer","Jawapan kau"))}:</b> ${x.chosen===undefined?esc(pick("Unanswered","Tak dijawab")):esc(opts[x.chosen])}</p><p><b>${esc(pick("Correct answer","Jawapan betul"))}:</b> ${esc(opts[x.qq.answer])}</p><p>${esc(exp)}</p><p class="small">${esc(pick("Mapped lesson","Lesson berkaitan"))}: ${esc(x.qq.lessonId)}</p></div></details>`}).join(""):`<div class="callout green"><b>${esc(pick("No incorrect answers in this set.","Tiada jawapan salah dalam set ini."))}</b></div>`;
+ $("#mockDone").onclick=()=>{exam=null;$("#mockTimer").textContent="--:--";showView("progress")}
 }
 function renderProgress(){
  const m=metrics();[["progKnowledge",m.knowledge],["progPractical",m.practical],["progSpeaking",m.speaking],["progWriting",m.writing]].forEach(([id,v])=>{$("#"+id).textContent=v+"%";$("#"+id+"Bar").style.width=v+"%"});
  $("#progressDomains").innerHTML=ACTIVE_LESSONS.map(l=>{const p=state.lessons[l.id],st=statusFor(l.id);return `<div class="review-item"><div class="domain-head"><strong>${esc(l.id)} · ${esc(lessonTitle(l))}</strong><span class="tag ${st}">${esc(p.status==="passed"?pick("PASSED","LEPAS"):pick("NOT PASSED","BELUM LEPAS"))}</span></div><p class="small">${esc(p.attempts?pick(`Best knowledge score: ${p.quizBest||0}%`,`Skor knowledge terbaik: ${p.quizBest||0}%`):pick("Not attempted yet.","Belum dicuba."))}</p></div>`}).join("");
- $("#mockHistory").innerHTML=`<p class="small">${esc(pick("Mixed mock remains paused until the beginner foundation lessons are stable.","Mixed mock masih dihentikan sampai lesson asas beginner stabil."))}</p>`;
+ $("#mockHistory").innerHTML=state.mockHistory.length?state.mockHistory.slice().reverse().map(h=>`<div class="review-item"><strong>${esc(h.date)} · ${h.score}%</strong><p class="small">${esc(pick(`${h.count} questions · Foundation Mock`,`${h.count} soalan · Mock Asas`))}</p></div>`).join(""):`<p class="small">${esc(pick("No mock attempt yet.","Belum ada percubaan mock."))}</p>`;
  $("#exportBtn").onclick=exportProgress;$("#reportBtn").onclick=downloadReport;$("#importFile").onchange=importProgress;$("#resetBtn").onclick=resetProgress;applyGlobalLanguage();
 }
 function download(name,text,type="application/json"){
@@ -1660,7 +1645,15 @@ function applyGlobalLanguage(){
  set('#view-syllabus .card>h1','Validate HD-01 before scaling the course','Sahkan HD-01 sebelum bina semua lesson lain');
  set('#view-syllabus .card>p','Only the current validation lesson is shown.','Hanya lesson yang sedang diuji dipaparkan.');
  set('#view-mock .eyebrow','ORIGINAL PRACTICE · NOT AN EXAM DUMP','LATIHAN ASLI · BUKAN EXAM DUMP');
- set('#view-mock h1','Mixed Mock Exam','Mixed Mock Exam');
+ set('#view-mock h1','Foundation Mock','Mock Asas');
+ set('#mockIntroTitle','Foundation Mock — 12 questions','Mock Asas — 12 soalan');
+ set('#mockIntroText','This mock only tests the two lessons you have actually completed: HD-01 and OS-01. It mixes direct questions, work situations, and evidence interpretation. No hints or explanations appear until you submit.','Mock ini hanya menguji dua lesson yang kau sudah siap: HD-01 dan OS-01. Ia campurkan soalan terus, situasi kerja dan tafsiran bukti. Tiada hint atau penerangan sehingga kau hantar jawapan.');
+ set('#foundationMockTitle','Foundation Mock 12','Mock Asas 12');
+ set('#foundationMockDesc','15 minutes · 3 sections · no hints','15 minit · 3 bahagian · tiada hint');
+ set('#fullMockTitle','Full Mixed Mock 50','Full Mixed Mock 50');
+ set('#fullMockDesc','Locked until broader syllabus coverage is completed.','Dikunci sehingga liputan silibus lebih luas disiapkan.');
+ set('#mockRuleTitle','Mock rules','Peraturan mock');
+ set('#mockRuleText','Answer independently. You may move between questions. Explanations and the correct answers are shown only after submission.','Jawab sendiri. Kau boleh bergerak antara soalan. Penerangan dan jawapan betul hanya ditunjukkan selepas hantar.');
  set('#view-progress .hero .eyebrow','READINESS, NOT FAKE COMPLETION','TAHAP BERSEDIA, BUKAN SEKADAR HABIS');
  set('#view-progress .hero h1','HD-01 validation meters','Ukuran validation HD-01');
  set('#view-progress .hero .metric:nth-child(1) span','Knowledge accuracy','Ketepatan pengetahuan');
@@ -1680,7 +1673,7 @@ function setGlobalLanguage(lang){state.settings.studyLanguage=lang;save();applyG
 function init(){
  $$('[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view));
  $("#globalLangEn").onclick=()=>setGlobalLanguage("en");$("#globalLangBm").onclick=()=>setGlobalLanguage("bm");
- $("#quick10").onclick=()=>startMock(10);$("#full50").onclick=()=>startMock(50);
+ $("#quick10").onclick=()=>startMock(12);$("#full50").onclick=()=>startMock(50);
  $("#mockExit").onclick=()=>{if(exam&&!exam.submitted&&!confirm("Exit this mock? Current answers will be lost."))return;if(timerId)clearInterval(timerId);exam=null;showView("dashboard")};
  state.currentIndex=firstIncompleteIndex();save();applyGlobalLanguage();showView("dashboard");
 }
@@ -1719,11 +1712,11 @@ init();
  function openBug(){const m=$t("#bugModal"),t=$t("#bugFab");if(m)m.classList.add("open");document.body.classList.add("bug-drawer-open");if(t)t.setAttribute("aria-expanded","true");const active=document.querySelector(".view.active");const title=document.querySelector("#studyTitle")?.textContent||active?.id?.replace("view-","")||"";$t("#bugScreen").value=$t("#bugScreen").value||title;setTimeout(()=>($t("#bugType")||$t("#bugScreen"))?.focus(),180)}
  function closeBug(){const m=$t("#bugModal"),t=$t("#bugFab");if(m)m.classList.remove("open");document.body.classList.remove("bug-drawer-open");if(t){t.setAttribute("aria-expanded","false");t.focus()}}
  function downloadFile(name,text,type="text/plain"){const blob=new Blob([text],{type}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),500)}
- function bugText(){const b=bugs();return ["CYBERQUEST CCST v3.25 — PLAYER VALIDATION LOG",`Generated: ${new Date().toLocaleString()}`,`Browser: ${navigator.userAgent}`,"",...b.flatMap((x,i)=>[`REPORT ${i+1} — ${x.type||"Bug"}`,`Category: ${x.category||"Not recorded"}`,`Severity: ${x.severity}`,`Saved: ${x.saved}`,`Screen: ${x.screen}`,`Action / observation: ${x.action}`,`Expected / useful part: ${x.expected}`,`Actual: ${x.actual}`,`Learning impact: ${x.impact}`,`Suggestion: ${x.suggestion||""}`,""])].join("\n")}
+ function bugText(){const b=bugs();return ["CYBERQUEST CCST v3.26 — PLAYER VALIDATION LOG",`Generated: ${new Date().toLocaleString()}`,`Browser: ${navigator.userAgent}`,"",...b.flatMap((x,i)=>[`REPORT ${i+1} — ${x.type||"Bug"}`,`Category: ${x.category||"Not recorded"}`,`Severity: ${x.severity}`,`Saved: ${x.saved}`,`Screen: ${x.screen}`,`Action / observation: ${x.action}`,`Expected / useful part: ${x.expected}`,`Actual: ${x.actual}`,`Learning impact: ${x.impact}`,`Suggestion: ${x.suggestion||""}`,""])].join("\n")}
  function initTest(){renderDays();setTimeout(qa,100);["#bugFab","#openBugBtn"].forEach(s=>{const e=$t(s);if(e)e.onclick=openBug});$t("#closeBugBtn").onclick=closeBug;$t("#bugModal").onclick=e=>{if(e.target.id==="bugModal")closeBug()};document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$t("#bugModal")?.classList.contains("open"))closeBug()});$t("#runQaBtn").onclick=qa;
   $t("#saveBugBtn").onclick=()=>{const x={type:$t("#bugType").value,category:$t("#bugCategory").value,severity:$t("#bugSeverity").value,screen:$t("#bugScreen").value.trim(),action:$t("#bugAction").value.trim(),expected:$t("#bugExpected").value.trim(),actual:$t("#bugActual").value.trim(),impact:$t("#bugImpact").value.trim(),suggestion:$t("#bugSuggestion").value.trim(),saved:new Date().toISOString()};if(!x.screen||!x.action||!x.actual){alert("Please fill Screen, Action / observation, and Actual result.");return}const b=bugs();b.push(x);saveBugs(b);["bugAction","bugExpected","bugActual","bugImpact","bugSuggestion"].forEach(id=>$t("#"+id).value="");updateBugCount();alert("Report saved offline.")};
   $t("#downloadBugsBtn").onclick=()=>downloadFile("CQ_v322_STAGE2_LOG.txt",bugText());
-  $t("#exportTestBtn").onclick=()=>{const st=loadTest();const lines=["CYBERQUEST CCST v3.25 — FIVE-DAY TEST NOTES",`Generated: ${new Date().toLocaleString()}`,""];days.forEach(d=>{lines.push(`DAY ${d.d} — ${d.title}`);d.items.forEach((x,i)=>lines.push(`${(st[d.d]||[])[i]?"[x]":"[ ]"} ${x}`));lines.push("")});lines.push(`Saved bug reports: ${bugs().length}`);downloadFile("CQ_v325_FIVE_DAY_TEST.txt",lines.join("\n"))};updateBugCount();}
+  $t("#exportTestBtn").onclick=()=>{const st=loadTest();const lines=["CYBERQUEST CCST v3.26 — FIVE-DAY TEST NOTES",`Generated: ${new Date().toLocaleString()}`,""];days.forEach(d=>{lines.push(`DAY ${d.d} — ${d.title}`);d.items.forEach((x,i)=>lines.push(`${(st[d.d]||[])[i]?"[x]":"[ ]"} ${x}`));lines.push("")});lines.push(`Saved bug reports: ${bugs().length}`);downloadFile("CQ_v326_FIVE_DAY_TEST.txt",lines.join("\n"))};updateBugCount();}
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initTest);else initTest();
 })();
 
